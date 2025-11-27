@@ -1,69 +1,47 @@
 #include "hooking.h"
 #include "MinHook.h"
-#include <DynamicOutput/Output.hpp>
+#include "print.h"
 
-using namespace Hooking;
-
-using ComparerType = bool(*)(void*, void*);
-
-uintptr_t g_comparerAddress = 0;
-uintptr_t g_comparerOffset = 0x01240FC0;
-ComparerType g_originalComparer = nullptr;
-
-bool ComparerHook(void* a, void* b)
+hooking::~hooking()
 {
-	RC::Output::send<RC::LogLevel::Verbose>(STR("SORT IS CALLED\n"));
-	return g_originalComparer(a, b);
+    if (m_initialized)
+        deinit();
 }
 
-RC::StringType Hooking::ResultToString(Result result)
+hooking_result hooking::init()
 {
-	switch (result)
-	{
-	case Result::Success:
-		return STR("success");
-	case Result::MinHookInitFailed:
-		return STR("MinHook initialization failed");
-	case Result::GetModuleFailed:
-		return STR("couldn't retrieve base address of the game");
-	case Result::ComparerHookFailed:
-		return STR("comparer hook failed");
-	}
+    if (MH_OK != MH_Initialize())
+        return hooking_result::MINHOOK_INIT_FAILED;
+
+    auto exe = GetModuleHandleA(nullptr);
+    if (NULL == exe)
+        return hooking_result::GET_BASE_ADDRESS_FAILED;
+
+    m_base = (std::uintptr_t)exe;
+	m_initialized = true;
+
+    return hooking_result::SUCCESS;
 }
 
-Result Hooking::InitializeHooks()
+void hooking::deinit()
 {
-	if (MH_OK != MH_Initialize())
-	{
-		return Result::MinHookInitFailed;
-	}
-	
-	HMODULE exeBase = GetModuleHandleA(NULL);
-	if (exeBase == NULL)
-	{
-		return Result::GetModuleFailed;
-	}
+    for (auto& [_, hi] : m_hooks) {
+        if (hi.address)
+            MH_DisableHook((LPVOID)hi.address);
 
-	g_comparerAddress = (uintptr_t)exeBase + g_comparerOffset;
-	if (MH_OK != MH_CreateHook((LPVOID)g_comparerAddress, &ComparerHook, (LPVOID*)&g_originalComparer))
-	{
-		return Result::ComparerHookFailed;
-	}
+         hi.deleter(hi.hook);
+    }
 
-	if (MH_OK != MH_EnableHook((LPVOID)g_comparerAddress))
-	{
-		return Result::ComparerHookFailed;
-	}
-	
-	return Result::Success;
+    MH_Uninitialize();
 }
 
-void Hooking::UninitializeHooks()
+hooking_result hooking::install(hook_info& hi)
 {
-	if (MH_OK != MH_DisableHook(&g_comparerAddress))
-	{
-		return;
-	}
+    if (MH_OK != MH_CreateHook((LPVOID)hi.address, (LPVOID)hi.detour, (LPVOID*)&hi.original))
+        return hooking_result::CREATE_HOOK_FAILED;
 
-	MH_Uninitialize();
+    if (MH_OK != MH_EnableHook((LPVOID)hi.address))
+        return hooking_result::ENABLE_HOOK_FAILED;
+
+    return hooking_result::SUCCESS;
 }
