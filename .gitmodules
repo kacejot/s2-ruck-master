@@ -1,0 +1,6 @@
+[submodule "s2-ruck-master/deps/RE-UE4SS"]
+	path = deps/RE-UE4SS
+	url = git@github.com:UE4SS-RE/RE-UE4SS.git
+[submodule "s2-ruck-master/deps/minhook"]
+	path = deps/minhook
+	url = git@github.com:TsudaKageyu/minhook.git
