@@ -7,6 +7,8 @@
 #include "hooking.h"
 #include "print.h"
 
+// lazy-fit algorithm for inventory placement
+
 class RuckMaster : public CppUserModBase
 {
 public:
@@ -17,16 +19,10 @@ public:
         ModDescription = STR("s2-ruck-master is a S.T.A.L.K.E.R. 2 mod that enhances inventory sorting and provides fully customizable item-placement rules through an ImGui-based interface");
         ModAuthors = STR("kacejot");
 
-        auto& game_base = global_context::instance().game_base;
-        game_base = (uintptr_t)GetModuleHandleA(nullptr);
-        if (NULL == game_base) {
-            LOG(Error, STR("failed to get game image base address"));
-        }
-
-        CHECK(m_hooking.init(game_base));
+        CHECK(m_hooking.init());
         CHECK(m_hooking.add_hook<COMPARER>(Comparer));
 
-        LOG(Verbose, STR("init success"));
+        LOG(Normal, STR("init success"));
     }
 
 private:

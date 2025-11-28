@@ -38,3 +38,14 @@ struct tuple_tail<std::tuple<T0, Ts...>>
 {
     using type = std::tuple<Ts...>; 
 };
+
+template<typename>
+struct function_signature;
+
+template<typename R, typename... Args>
+struct function_signature<R(__fastcall*)(Args...)> {
+    using type = std::function<R(Args...)>;
+};
+
+template<typename T>
+using function_signature_t = typename function_signature<T>::type;

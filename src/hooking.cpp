@@ -8,12 +8,11 @@ hooking::~hooking()
         deinit();
 }
 
-hooking_result hooking::init(uintptr_t base)
+hooking_result hooking::init()
 {
     if (MH_OK != MH_Initialize())
         return hooking_result::MINHOOK_INIT_FAILED;
 
-    m_base = base;
 	m_initialized = true;
 
     return hooking_result::SUCCESS;

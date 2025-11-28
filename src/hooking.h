@@ -4,6 +4,7 @@
 #include <map>
 
 #include "lambda_traits.h"
+#include "global_context.h"
 #include "function_info.h"
 #include "hooking_result.h"
 
@@ -21,7 +22,7 @@ struct hook_info
 class hooking
 {
 public:
-	hooking_result init(uintptr_t base);
+	hooking_result init();
 	~hooking();
 
 	template<known_function_id ID, typename Fn>
@@ -35,7 +36,7 @@ public:
 	{
 		hook_info& hi = m_hooks[ID];
 		hi.offset = offset;
-		hi.address = m_base + offset;
+		hi.address = get_ctx().game_base + offset;
 
 		using cb_t = std::decay_t<Fn>;
 		hi.hook = (uintptr_t)(new cb_t(std::forward<Fn>(cb)));
@@ -102,7 +103,6 @@ private:
 	}
 
 private:
-	uintptr_t m_base;
 	std::map<uint32_t, hook_info> m_hooks;
 	bool m_initialized = false;
 };

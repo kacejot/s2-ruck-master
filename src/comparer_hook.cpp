@@ -1,4 +1,4 @@
-#include "comparer_hook.h"
+﻿#include "comparer_hook.h"
 
 #include <thread>
 #include <chrono>
@@ -18,44 +18,24 @@ bool __fastcall Comparer(comparer_original_t, void* left_ptr, void* right_ptr)
         ((*right & 0xFFFFFFF0) == 0xFFFFFFF0))
         return ((*right & 0xFFFFFFF0) != 0xFFFFFFF0);
 
-    // --- resolve items -----------------------------------------------------
-    const auto game_base = global_context::instance().game_base;
+    const auto game_base = get_ctx().game_base;
+	auto& funcs = get_ctx().wrappers;
 
-    auto get_global_state = reinterpret_cast<void*(*)()>(
-        game_base + known_function_offsets[GET_GLOBAL_STATE]);
+    void* global_state_left = funcs.get_global_state();
+    void* descriptor_root_left = (void*)((uintptr_t)global_state_left + 0x43F860);
+    uintptr_t obj_left = funcs.get_item_by_descriptor(descriptor_root_left, *left & 0x7FFFFFF);
+    uintptr_t meta_left = funcs.get_item_metadata(obj_left);
+    S2String name_left{};
+    funcs.get_item_name(meta_left, &name_left);
 
-    auto get_item_by_descriptor = reinterpret_cast<uintptr_t(__fastcall*)(void* root, uint32_t id)>(
-        game_base + known_function_offsets[GET_ITEM_BY_DESCRIPTOR]);
+	void* global_state_right = funcs.get_global_state();
+	void* descriptor_root_right = (void*)((uintptr_t)global_state_right + 0x43F860);
+    uintptr_t obj_right = funcs.get_item_by_descriptor(descriptor_root_right, *right & 0x7FFFFFF);
+    uintptr_t meta_right = funcs.get_item_metadata(obj_right);
+    S2String name_right{};
+    funcs.get_item_name(meta_right, &name_right);
 
-    auto get_item_metadata = reinterpret_cast<uintptr_t(__fastcall*)(uintptr_t)>(
-        game_base + known_function_offsets[GET_ITEM_METADATA]);
-
-    auto get_weapon_from_item = reinterpret_cast<uintptr_t(__fastcall*)(uintptr_t)>(
-        game_base + known_function_offsets[GET_WEAPON_FROM_ITEM]);
-
-    auto get_secondary_sort_key = reinterpret_cast<int(__fastcall*)(uintptr_t)>(
-        game_base + known_function_offsets[GET_SECONDARY_SORT_KEY]);
-
-    auto get_item_name = reinterpret_cast<void(__fastcall*)(uintptr_t, void**)>(
-        game_base + known_function_offsets[GET_ITEM_NAME]);
-
-    auto compare_names = reinterpret_cast<int(__fastcall*)(void*, void*)>(
-        game_base + known_function_offsets[COMPARE_ITEM_NAMES]);
-
-    auto free_item_name = reinterpret_cast<void(__fastcall*)(void*)>(
-        game_base + known_function_offsets[FREE_ITEM_NAME]);
-
-    void* global_state = get_global_state();
-
-    void* descriptor_root = *reinterpret_cast<void**>(
-        reinterpret_cast<uintptr_t>(global_state) + 4454496
-    );
-
-    uintptr_t obj_left = get_item_by_descriptor(descriptor_root, *left & 0x7FFFFFF);
-    uintptr_t obj_right = get_item_by_descriptor(descriptor_root, *right & 0x7FFFFFF);
-
-    uintptr_t meta_left = get_item_metadata(obj_left);
-    uintptr_t meta_right = get_item_metadata(obj_right);
+    LOG(Verbose, std::format(STR(" --- comparing items: \"{}\" vs \"{}\""), name_left.flag ? (wchar_t*)name_left.ptr : STR("<none>"), name_right.flag ? (wchar_t*)name_right.ptr : STR("<none>")));
 
     int type_left = *reinterpret_cast<int*>(meta_left + 208);
     int type_right = *reinterpret_cast<int*>(meta_right + 208);
@@ -101,14 +81,11 @@ bool __fastcall Comparer(comparer_original_t, void* left_ptr, void* right_ptr)
         return idx_left < idx_right;
     }
 
-
-    LOG(Normal, STR("Before compare durability"));
-    std::this_thread::sleep_for(1000ms);
     // --- If weapon, compare durability
     if (type_left == 5)
     {
-        uintptr_t w1 = get_weapon_from_item(obj_left);
-        uintptr_t w2 = get_weapon_from_item(obj_right);
+        uintptr_t w1 = funcs.get_weapon_from_item(obj_left);
+        uintptr_t w2 = funcs.get_weapon_from_item(obj_right);
 
         uint8_t d1 = *(uint8_t*)(w1 + 340);
         uint8_t d2 = *(uint8_t*)(w2 + 340);
@@ -117,41 +94,27 @@ bool __fastcall Comparer(comparer_original_t, void* left_ptr, void* right_ptr)
             return d1 < d2;
     }
 
-    LOG(Normal, STR("Before secondary sort key"));
-    std::this_thread::sleep_for(1000ms);
     // --- Secondary Sort Key, TODO: what is this even?
-    int k_right = get_secondary_sort_key(obj_right);
-    int k_left = get_secondary_sort_key(obj_left);
+    int k_right = funcs.get_secondary_sort_key(obj_right);
+    int k_left = funcs.get_secondary_sort_key(obj_left);
 
     if (k_left != k_right)
         return k_left < k_right;
 
-    LOG(Normal, STR("Before compare names"));
-    std::this_thread::sleep_for(1000ms);
     // --- Compare Names
-    void* name_left = nullptr;
-    void* name_right = nullptr;
+    void* cmp_left_ptr = name_left.ptr ? name_left.ptr : (void*)g_empty_name;
+    void* cmp_right_ptr = name_right.ptr ? name_right.ptr : (void*)g_empty_name;
 
-    uintptr_t metaL = get_item_metadata(obj_left);
-    get_item_name(metaL, &name_left);
-
-    uintptr_t metaR = get_item_metadata(obj_right);
-    get_item_name(metaR, &name_right);
-
-    bool has_left = (name_left != nullptr);
-    bool has_right = (name_right != nullptr);
-
-    void* cmp_left = has_left ? name_left : (void*)L"";
-    void* cmp_right = has_right ? name_right : (void*)L"";
-
-    int name_cmp = compare_names(cmp_left, cmp_right);
-
+    int name_cmp = funcs.compare_names(cmp_left_ptr, cmp_right_ptr);
     bool result = (name_cmp < 0);
 
-    if (has_right) free_item_name(name_right);
-    if (has_left)  free_item_name(name_left);
+    LOG(Verbose, std::format(STR("--- {}'s name is bigger"), result ? STR("right") : STR("left")));
 
-    LOG(Normal, STR("About to return"));
-    std::this_thread::sleep_for(1000ms);
+    if (name_left.ptr)
+        funcs.free_item_name(name_left.ptr);
+
+    if (name_right.ptr)
+        funcs.free_item_name(name_right.ptr);
+
     return result;
 }
