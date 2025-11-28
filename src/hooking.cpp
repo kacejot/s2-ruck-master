@@ -8,16 +8,12 @@ hooking::~hooking()
         deinit();
 }
 
-hooking_result hooking::init()
+hooking_result hooking::init(uintptr_t base)
 {
     if (MH_OK != MH_Initialize())
         return hooking_result::MINHOOK_INIT_FAILED;
 
-    auto exe = GetModuleHandleA(nullptr);
-    if (NULL == exe)
-        return hooking_result::GET_BASE_ADDRESS_FAILED;
-
-    m_base = (std::uintptr_t)exe;
+    m_base = base;
 	m_initialized = true;
 
     return hooking_result::SUCCESS;

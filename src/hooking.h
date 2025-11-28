@@ -21,7 +21,7 @@ struct hook_info
 class hooking
 {
 public:
-	hooking_result init();
+	hooking_result init(uintptr_t base);
 	~hooking();
 
 	template<known_function_id ID, typename Fn>

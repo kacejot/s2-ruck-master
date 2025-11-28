@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 
 project(s2-ruck-master)
 
-add_compile_definitions(UE_BUILD_DEVELOPMENT=1)
+add_compile_definitions(UE_BUILD_SHIPPING=1)
 add_compile_definitions(PLATFORM_WINDOWS PLATFORM_MICROSOFT OVERRIDE_PLATFORM_HEADER_NAME=Windows UBT_COMPILED_PLATFORM=Win64)
 
 add_subdirectory(deps/RE-UE4SS)
