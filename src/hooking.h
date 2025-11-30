@@ -6,7 +6,31 @@
 #include "type_traits.h"
 #include "global_context.h"
 #include "local_types.h"
-#include "hooking_result.h"
+
+enum class hooking_result
+{
+	SUCCESS,
+	MINHOOK_INIT_FAILED,
+	CREATE_HOOK_FAILED,
+	ENABLE_HOOK_FAILED,
+};
+
+inline RC::StringType to_string(hooking_result result)
+{
+	switch (result)
+	{
+	case hooking_result::SUCCESS:
+		return STR("success");
+	case hooking_result::MINHOOK_INIT_FAILED:
+		return STR("MinHook initialization failed");
+	case hooking_result::CREATE_HOOK_FAILED:
+		return STR("failed to create hook");
+	case hooking_result::ENABLE_HOOK_FAILED:
+		return STR("failed to enable hook");
+	default:
+		return STR("unknown error");
+	}
+}
 
 struct hook_info
 {
@@ -14,7 +38,6 @@ struct hook_info
 	uintptr_t address;
 	uintptr_t original;
 	uintptr_t detour;
-	uintptr_t thunk;
 	uintptr_t hook;
 	void(*deleter)(uintptr_t);
 };

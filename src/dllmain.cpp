@@ -7,8 +7,6 @@
 #include "hooking.h"
 #include "print.h"
 
-// lazy-fit algorithm for inventory placement
-
 class RuckMaster : public CppUserModBase
 {
 public:

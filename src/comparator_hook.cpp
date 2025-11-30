@@ -79,7 +79,7 @@ namespace
 
         if (left.type != right.type)
         {
-            uint32_t* table = reinterpret_cast<uint32_t*>(game_base + g_priority_table_start_addr);
+            uint32_t* table = *reinterpret_cast<uint32_t**>(game_base + g_priority_table_start_addr);
             int count = *reinterpret_cast<int*>(game_base + g_priority_table_size_addr);
 
             uint32_t* begin = table;
@@ -113,7 +113,7 @@ namespace
 
     std::strong_ordering compare_ammo(const item_info& left, const item_info& right)
     {
-        if (left.type == AMMO)
+        if (AMMO == left.type && AMMO == right.type)
         {
 			return left.modification <=> right.modification; // in context of ammo, modification is weapon type
         }
