@@ -141,7 +141,7 @@ struct item_info
 {
 	s2_string name;
 	int type;
-	int secondary_key; // TODO: wtf is this
+	int secondary_key;
 	uint8_t modification;
 	uint8_t width;
 	uint8_t height;

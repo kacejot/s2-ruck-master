@@ -113,7 +113,7 @@ namespace
 
     std::strong_ordering compare_ammo(const item_info& left, const item_info& right)
     {
-        if (left.type == AMMO) // TODO: check if right is weapon and test
+        if (left.type == AMMO)
         {
 			return left.modification <=> right.modification; // in context of ammo, modification is weapon type
         }
