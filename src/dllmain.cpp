@@ -3,7 +3,7 @@
 #include <Mod/CppUserModBase.hpp>
 
 #include "global_context.h"
-#include "comparer_hook.h"
+#include "comparator_hook.h"
 #include "hooking.h"
 #include "print.h"
 
@@ -20,7 +20,7 @@ public:
         ModAuthors = STR("kacejot");
 
         CHECK(m_hooking.init());
-        CHECK(m_hooking.add_hook<COMPARER>(Comparer));
+        CHECK(m_hooking.add_hook<COMPARATOR>(comparator));
 
         LOG(Normal, STR("init success"));
     }

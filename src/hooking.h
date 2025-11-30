@@ -3,9 +3,9 @@
 #include <array>
 #include <map>
 
-#include "lambda_traits.h"
+#include "type_traits.h"
 #include "global_context.h"
-#include "function_info.h"
+#include "local_types.h"
 #include "hooking_result.h"
 
 struct hook_info
