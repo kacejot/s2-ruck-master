@@ -1,26 +1,44 @@
 ﻿#pragma once 
+#include <string>
 #include "local_types.h"
-
-struct ruck_master_config
-{
-	std::list<std::pair<sort_rule_id, bool>> sort_rules_order;
-	std::list<item_type_id> item_types_priority;
-	bool enable_logging;
-	bool allow_editing;
-};
 
 enum preset_id
 	{
 	VANILLA = 0,
 	COP,
-	CUSTOM,
+	CUSTOM,   // TODO: do not load from memory - load from save file
 	PRESETS_TOTAL
 };
 
-std::array<ruck_master_config, PRESETS_TOTAL> g_config_presets =
+struct ruck_master_config
+{
+	std::array<std::pair<sort_rule_id, bool>, RULES_TOTAL> sort_rules_order;
+	std::array<item_type_id, ITEM_TYPES_TOTAL> item_types_priority;
+	preset_id current_preset;
+	bool enable_logging;
+	bool allow_editing;
+};
+
+inline std::string preset_id_to_string(preset_id id)
+{
+	switch (id)
+	{
+	case VANILLA:
+		return "Vanilla";
+	case COP:
+		return "Call of Pripyat";
+	case CUSTOM:
+		return "Custom";
+	default:
+		return "Unknown";
+	}
+}
+
+constexpr std::array<ruck_master_config, PRESETS_TOTAL> g_config_presets =
 {
 	ruck_master_config{
 		{
+			std::pair<sort_rule_id, bool>
 			{ COMPARE_SIZE, false },
 			{ COMPARE_QUEST, true },
 			{ COMPARE_TYPE_PRIORITY, true },
@@ -31,7 +49,7 @@ std::array<ruck_master_config, PRESETS_TOTAL> g_config_presets =
 		{
 			CONSUMABLES,
 			AMMO,
-			UNDEFINED_1,
+			PDA,
 			NVG,
 			WEAPON_MOD,
 			DETECTOR,
@@ -41,12 +59,12 @@ std::array<ruck_master_config, PRESETS_TOTAL> g_config_presets =
 			MISC,
 			MUTANT_PARTS,
 		},
-
-		false, // enable_logging
-		false  // allow_editing
+		false,
+		false
 	},
-	ruck_master_config{
+	{
 		{
+			std::pair<sort_rule_id, bool>
 			{ COMPARE_SIZE, true },
 			{ COMPARE_QUEST, false },
 			{ COMPARE_TYPE_PRIORITY, true },
@@ -57,7 +75,7 @@ std::array<ruck_master_config, PRESETS_TOTAL> g_config_presets =
 		{
 			CONSUMABLES,
 			AMMO,
-			UNDEFINED_1,
+			PDA,
 			NVG,
 			WEAPON_MOD,
 			DETECTOR,
@@ -67,12 +85,12 @@ std::array<ruck_master_config, PRESETS_TOTAL> g_config_presets =
 			MISC,
 			MUTANT_PARTS,
 		},
-
 		false,
 		false
 	},
-	ruck_master_config{
+	{
 		{
+			std::pair<sort_rule_id, bool>
 			{ COMPARE_SIZE, true },
 			{ COMPARE_QUEST, true },
 			{ COMPARE_TYPE_PRIORITY, true },
@@ -83,7 +101,7 @@ std::array<ruck_master_config, PRESETS_TOTAL> g_config_presets =
 		{
 			CONSUMABLES,
 			AMMO,
-			UNDEFINED_1,
+			PDA,
 			NVG,
 			WEAPON_MOD,
 			DETECTOR,
@@ -93,10 +111,7 @@ std::array<ruck_master_config, PRESETS_TOTAL> g_config_presets =
 			MISC,
 			MUTANT_PARTS,
 		},
-
-		false, // enable_logging
-		true  // allow_editing
+		false,
+		true
 	}
 };
-
-// TODO: load/unload config from file

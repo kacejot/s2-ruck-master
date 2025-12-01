@@ -38,6 +38,27 @@ enum sort_rule_id
 	RULES_TOTAL
 };
 
+inline std::string sort_rule_id_to_string(sort_rule_id id)
+{
+	switch (id)
+	{
+	case COMPARE_QUEST:
+		return "Prioritize quest items";
+	case COMPARE_SIZE:
+		return "Sort by size";
+	case COMPARE_TYPE_PRIORITY:
+		return "Prioritize by type";
+	case COMPARE_AMMO_CALIBER:
+		return "Sort ammo by caliber";
+	case COMPARE_SECONDARY_KEY:
+		return "Sort by secondary key";
+	case COMPARE_NAME:
+		return "Sort by name";
+	default:
+		return "Unknown";
+	}
+}
+
 static constexpr std::array<uintptr_t, FUNCTIONS_TOTAL> known_function_offsets = {
 	0x1240FC0, // comparator
 	0x18148C4, // get global state
@@ -88,12 +109,43 @@ enum item_type_id
 	CONSUMABLES,
 	AMMO,
 	DETECTOR,
-	UNDEFINED_1, // TODO: Maybe add log to track this specific type usage
+	PDA, // TODO: Maybe add log to track this specific type usage
 	MISC,
 	MUTANT_PARTS,
 	NVG,
 	ITEM_TYPES_TOTAL
 };
+
+inline std::string item_type_id_to_string(item_type_id id)
+{
+	switch (id)
+	{
+	case WEAPON:
+		return "Weapon";
+	case ARMOR:
+		return "Armor";
+	case ARTIFACT:
+		return "Artifact";
+	case WEAPON_MOD:
+		return "Weapon Mod";
+	case CONSUMABLES:
+		return "Consumables";
+	case AMMO:
+		return "Ammo";
+	case DETECTOR:
+		return "Detector";
+	case PDA:
+		return "PDA";
+	case MISC:
+		return "Miscellaneous";
+	case MUTANT_PARTS:
+		return "Mutant Parts";
+	case NVG:
+		return "NVG";
+	default:
+		return "Unknown";
+	}
+}
 
 class s2_string
 {
