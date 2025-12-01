@@ -43,7 +43,7 @@ namespace
 
 #ifdef UE_BUILD_DEVELOPMENT
         LOG(Verbose, std::format(
-            STR(" --- item with name {} has type {} | width: {}, height: {}, is_quest: {}, durability: {}"),
+            STR(" --- item with name {} has type {} | width: {}, height: {}, is_quest: {}, modification: {}"),
             result.name.c_str(),
             result.type,
             result.width,
@@ -132,7 +132,6 @@ namespace
         return get_functions().compare_names(cmp_left_ptr, cmp_right_ptr) <=> 0;
 	}
 
-	using attribute_comparator_t = std::function<std::strong_ordering(const item_info&, const item_info&)>;
     static std::vector<attribute_comparator_t> g_sort_rules =
     {
         compare_quest_items,

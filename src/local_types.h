@@ -24,10 +24,21 @@ enum known_function_id
 	GET_ITEM_NAME,
 	COMPARE_ITEM_NAMES,
 	FREE_ITEM_NAME,
-	TOTAL_FUNCTIONS
+	FUNCTIONS_TOTAL
 };
 
-static constexpr std::array<uintptr_t, TOTAL_FUNCTIONS> known_function_offsets = {
+enum sort_rule_id
+{
+	COMPARE_QUEST,
+	COMPARE_SIZE,
+	COMPARE_TYPE_PRIORITY,
+	COMPARE_AMMO_CALIBER,
+	COMPARE_SECONDARY_KEY,
+	COMPARE_NAME,
+	RULES_TOTAL
+};
+
+static constexpr std::array<uintptr_t, FUNCTIONS_TOTAL> known_function_offsets = {
 	0x1240FC0, // comparator
 	0x18148C4, // get global state
 	0x143F2D0, // get item by descriptor
@@ -40,6 +51,7 @@ static constexpr std::array<uintptr_t, TOTAL_FUNCTIONS> known_function_offsets =
 };
 
 class s2_string;
+struct item_info;
 
 using comparator_t = bool(__fastcall*)(void*, void*);
 using get_global_state_t = void* (*)();
@@ -50,6 +62,7 @@ using get_secondary_sort_key_t = int(__fastcall*)(uintptr_t);
 using get_item_name_t = void(__fastcall*)(uintptr_t, s2_string*);
 using compare_names_t = int(__fastcall*)(const wchar_t*, const wchar_t*);
 using free_s2string_t = void(__fastcall*)(void*);
+using attribute_comparator_t = std::function<std::strong_ordering(const item_info&, const item_info&)>;
 
 struct known_functions
 {
@@ -63,7 +76,9 @@ struct known_functions
 	function_signature_t<free_s2string_t>             free_s2string;
 };
 
-enum item_type
+// type info
+
+enum item_type_id
 {
 	ITEM_TYPE_UNKNOWN = -1,
 	WEAPON = 0,
@@ -77,6 +92,7 @@ enum item_type
 	MISC,
 	MUTANT_PARTS,
 	NVG,
+	ITEM_TYPES_TOTAL
 };
 
 class s2_string
@@ -84,7 +100,6 @@ class s2_string
 public:
 	s2_string() : m_deleter(nullptr), m_ptr(nullptr), m_flag(0) {}
 
-	// move
 	s2_string(s2_string&& other) noexcept : m_ptr(other.m_ptr), m_flag(other.m_flag)
 	{
 		other.m_ptr = nullptr;
@@ -106,7 +121,6 @@ public:
 		return *this;
 	}
 
-	// forbid copy
 	s2_string(const s2_string&) = delete;
 	s2_string& operator=(const s2_string&) = delete;
 

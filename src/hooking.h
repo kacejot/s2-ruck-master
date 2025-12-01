@@ -54,6 +54,10 @@ public:
 		return add_hook<ID>(known_function_offsets[ID], std::forward<Fn>(cb));
 	}
 
+private:
+	void deinit();
+	hooking_result install(hook_info& hi);
+
 	template<known_function_id ID, typename Fn>
 	hooking_result add_hook(uintptr_t offset, Fn&& cb)
 	{
@@ -78,10 +82,6 @@ public:
 
 		return install(hi);
 	}
-
-private:
-	void deinit();
-	hooking_result install(hook_info& hi);
 
 	template<known_function_id ID>
 	static hook_info*& get_hook_info()
