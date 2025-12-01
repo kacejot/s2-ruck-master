@@ -13,5 +13,23 @@ file(GLOB_RECURSE SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
 )
 
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
-target_link_libraries(${PROJECT_NAME} PUBLIC UE4SS minhook)
+file(GLOB IMGUI_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui/backends/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui/backends/*.h"
+)
+
+add_library(${PROJECT_NAME} SHARED
+    ${SOURCES}
+    ${IMGUI_SOURCES}
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui"
+)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    UE4SS
+    minhook
+)

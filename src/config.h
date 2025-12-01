@@ -17,8 +17,6 @@ enum preset_id
 	PRESETS_TOTAL
 };
 
-
-
 std::array<ruck_master_config, PRESETS_TOTAL> g_config_presets =
 {
 	ruck_master_config{
