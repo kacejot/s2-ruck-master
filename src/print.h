@@ -1,8 +1,7 @@
 ﻿#pragma once
 #include <DynamicOutput/Output.hpp>
-
-
-static const RC::StringType g_fmt = STR("[s2-ruck-master]: {}\n");;
+#include "constants.h"
+#include "global_context.h"
 
 #define CHECK(expr)                                                              \
 do {                                                                             \
@@ -12,34 +11,6 @@ do {                                                                            
     }                                                                            \
 } while(0)
 
-static inline std::wstring_view extract_name(std::string_view full) {
-    size_t pos = full.rfind("_t");
-    if (pos == std::string_view::npos)
-        return std::wstring(full.begin(), full.end());
-    return std::wstring(full.begin(), full.begin() + pos);
-}
-
-#if 1 == UE_BUILD_SHIPPING
-    #define FOREIGN_FUNCTION(signature_t, address)                               \
-        reinterpret_cast<signature_t>(address)
-#else
-    #define FOREIGN_FUNCTION(signature_t, address)                               \
-        ([orig_fn = reinterpret_cast<signature_t>(address)](auto&&... args) {    \
-            constexpr std::string_view full_name = #signature_t;                 \
-            std::wstring name = std::wstring(extract_name(full_name));           \
-                                                                                 \
-            std::wstringstream ss;                                               \
-            ss << name << L"(";                                                  \
-            bool first = true;                                                   \
-            ((ss << (first ? (first = false, L"") : L", ")                       \
-                 << std::format(L"0x{:x}", (uintptr_t)args)), ...);              \
-            ss << L")";                                                          \
-            LOG(Verbose, ss.str());                                              \
-                                                                                 \
-            return orig_fn(std::forward<decltype(args)>(args)...);               \
-        })
-
-#endif
-
-#define LOG(level, ...)                                                          \
-    RC::Output::send<RC::LogLevel::level>(g_fmt, ##__VA_ARGS__);
+#define LOG(level, fmt, ...)                                                     \
+    if (get_ctx().config.enable_logging)                                         \
+        RC::Output::send<RC::LogLevel::level>(std::format(g_fmt, fmt), ##__VA_ARGS__);

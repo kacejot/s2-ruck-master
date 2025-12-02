@@ -1,44 +1,48 @@
 #pragma once
 #include <imgui.h>
+#include "config.h"
 
-template <typename T>
-void DragReorder(std::vector<T>& list, int index, const char* id)
+template<typename T, size_t N>
+bool DragReorder(std::array<T, N>& arr, int index, const char* id)
 {
-    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+    if (ImGui::BeginDragDropSource())
     {
         ImGui::SetDragDropPayload(id, &index, sizeof(int));
         ImGui::Text("Move");
         ImGui::EndDragDropSource();
     }
-
     if (ImGui::BeginDragDropTarget())
     {
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(id))
         {
-            int src_idx = *(int*)payload->Data;
-            if (src_idx != index)
+            int src = *(int*)payload->Data;
+            if (src != index)
             {
-                T temp = list[src_idx];
-                if (src_idx < index)
+                auto temp = arr[src];
+                if (src < index)
                 {
-                    for (int i = src_idx; i < index; i++)
-                        list[i] = list[i + 1];
-                    list[index] = temp;
+                    for (int i = src; i < index; i++)
+                        arr[i] = arr[i + 1];
+                    arr[index] = temp;
                 }
                 else
                 {
-                    for (int i = src_idx; i > index; i--)
-                        list[i] = list[i - 1];
-                    list[index] = temp;
+                    for (int i = src; i > index; i--)
+                        arr[i] = arr[i - 1];
+                    arr[index] = temp;
                 }
+
+                return true;
             }
         }
         ImGui::EndDragDropTarget();
     }
+
+    return false;
 }
 
 void RenderPresets();
 void RenderLists();
-void RenderHelpButton(const char* text);
-void RenderBottomOptions();
-bool IsRuleEnabled(const char* name);
+void RenderHelpButton(const char* label, const char* text);
+void RenderFlags();
+bool IsRuleEnabled(sort_rule_id id);

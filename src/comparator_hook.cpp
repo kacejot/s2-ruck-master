@@ -3,6 +3,7 @@
 #include <thread>
 #include <chrono>
 #include <compare>
+#include <map>
 
 #include "global_context.h"
 #include "print.h"
@@ -33,7 +34,7 @@ namespace
 
         result.width = *reinterpret_cast<uint8_t*>(meta + 202);
         result.height = *reinterpret_cast<uint8_t*>(meta + 203);
-        result.type = *reinterpret_cast<int*>(meta + 208);
+        result.type = *reinterpret_cast<item_type_id*>(meta + 208);
         result.is_quest = (*(uint8_t*)(obj + 65) & 2) != 0;
         result.secondary_key = funcs.get_secondary_sort_key(obj);
         if (AMMO == result.type)
@@ -41,17 +42,16 @@ namespace
             result.modification = *(uint8_t*)(funcs.get_weapon_from_item(obj) + 340);
         }
 
-#ifdef UE_BUILD_DEVELOPMENT
-        LOG(Verbose, std::format(
+        LOG(Verbose,
             STR(" --- item with name {} has type {} | width: {}, height: {}, is_quest: {}, modification: {}"),
             result.name.c_str(),
-            result.type,
+            (int)result.type,
             result.width,
             result.height,
             result.is_quest ? STR("true") : STR("false"),
             result.modification
-        ));
-#endif
+        );
+
         return result;
     }
 
@@ -79,28 +79,25 @@ namespace
 
         if (left.type != right.type)
         {
-            uint32_t* table = *reinterpret_cast<uint32_t**>(game_base + g_priority_table_start_addr);
-            int count = *reinterpret_cast<int*>(game_base + g_priority_table_size_addr);
+			const auto& table = get_ctx().config.item_types_priority;
 
-            uint32_t* begin = table;
-            uint32_t* end = table + count;
 
             int idx_left = -1;
-            for (uint32_t* p = begin; p != end; ++p)
+            for (const auto priority : table)
             {
-                if (*p == left.type)
+                idx_left++;
+                if (priority == left.type)
                 {
-                    idx_left = int(p - begin);
                     break;
                 }
             }
 
             int idx_right = -1;
-            for (uint32_t* p = begin; p != end; ++p)
+            for (const auto priority : table)
             {
-                if (*p == right.type)
+                idx_right++;
+                if (priority == right.type)
                 {
-                    idx_right = int(p - begin);
                     break;
                 }
             }
@@ -132,14 +129,14 @@ namespace
         return get_functions().compare_names(cmp_left_ptr, cmp_right_ptr) <=> 0;
 	}
 
-    static std::vector<attribute_comparator_t> g_sort_rules =
+    std::map<sort_rule_id, attribute_comparator_t> g_sort_rules =
     {
-        compare_quest_items,
-        compare_size,
-        compare_types_in_priority_table,
-        compare_ammo,
-        compare_secondary_keys,
-        compare_names,
+        { COMPARE_QUEST, compare_quest_items },
+        { COMPARE_SIZE, compare_size },
+        { COMPARE_TYPE_PRIORITY, compare_types_in_priority_table },
+        { COMPARE_AMMO_CALIBER, compare_ammo },
+        { COMPARE_SECONDARY_KEY, compare_secondary_keys },
+        { COMPARE_NAME, compare_names },
     };
 }
 
@@ -158,8 +155,12 @@ bool __fastcall comparator(comparator_t, uint32_t* left_ptr, uint32_t* right_ptr
     auto left_item = load_item_by_descriptor(left_descriptor);
     auto right_item = load_item_by_descriptor(right_descriptor);
 
-    for (auto&& rule : g_sort_rules)
+    for (const auto& [rule_id, rule_enabled] : get_ctx().config.sort_rules_order)
     {
+        if (!rule_enabled)
+			continue;
+
+		const auto& rule = g_sort_rules[rule_id];
         auto result = rule(left_item, right_item);
         if (std::strong_ordering::equal == result)
             continue;

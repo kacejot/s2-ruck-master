@@ -17,15 +17,15 @@ public:
         ModVersion = STR("0.1");
         ModDescription = STR("s2-ruck-master is a S.T.A.L.K.E.R. 2 mod that enhances inventory sorting and provides fully customizable item-placement rules through an ImGui-based interface");
         ModAuthors = STR("kacejot");
+        
         UE4SS_ENABLE_IMGUI();
 
         register_tab(STR("Ruck Master"), [](CppUserModBase* instance) {
             static_cast<RuckMaster*>(instance)->RenderUI();
         });
+
         CHECK(m_hooking.init());
         CHECK(m_hooking.add_hook<COMPARATOR>(comparator));
-
-        LOG(Normal, STR("init success"));
     }
  
     void RenderUI()
@@ -34,7 +34,7 @@ public:
         ImGui::Separator();
         RenderLists();
         ImGui::Separator();
-        RenderBottomOptions();
+        RenderFlags();
     }
 
 private:

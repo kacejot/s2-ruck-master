@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <functional>
 #include <array>
+#include <string>
 
 #include "type_traits.h"
 
@@ -29,6 +30,7 @@ enum known_function_id
 
 enum sort_rule_id
 {
+	SORT_RULE_ID_INVALID = -1,
 	COMPARE_QUEST,
 	COMPARE_SIZE,
 	COMPARE_TYPE_PRIORITY,
@@ -38,7 +40,7 @@ enum sort_rule_id
 	RULES_TOTAL
 };
 
-inline std::string sort_rule_id_to_string(sort_rule_id id)
+inline std::string sort_rule_id_to_readable_string(sort_rule_id id)
 {
 	switch (id)
 	{
@@ -57,6 +59,44 @@ inline std::string sort_rule_id_to_string(sort_rule_id id)
 	default:
 		return "Unknown";
 	}
+}
+
+inline std::string sort_rule_id_to_string(sort_rule_id id)
+{
+	switch (id)
+	{
+		case COMPARE_QUEST:
+			return "COMPARE_QUEST";
+		case COMPARE_SIZE:
+			return "COMPARE_SIZE";
+		case COMPARE_TYPE_PRIORITY:
+			return "COMPARE_TYPE_PRIORITY";
+		case COMPARE_AMMO_CALIBER:
+			return "COMPARE_AMMO_CALIBER";
+		case COMPARE_SECONDARY_KEY:
+			return "COMPARE_SECONDARY_KEY";
+		case COMPARE_NAME:
+			return "COMPARE_NAME";
+		return "";
+	}
+}
+
+
+inline sort_rule_id sort_rule_id_from_string(const std::string& str)
+{
+	if (str == "COMPARE_QUEST")
+		return COMPARE_QUEST;
+	if (str == "COMPARE_SIZE")
+		return COMPARE_SIZE;
+	if (str == "COMPARE_TYPE_PRIORITY")
+		return COMPARE_TYPE_PRIORITY;
+	if (str == "COMPARE_AMMO_CALIBER")
+		return COMPARE_AMMO_CALIBER;
+	if (str == "COMPARE_SECONDARY_KEY")
+		return COMPARE_SECONDARY_KEY;
+	if (str == "COMPARE_NAME")
+		return COMPARE_NAME;
+	return SORT_RULE_ID_INVALID;
 }
 
 static constexpr std::array<uintptr_t, FUNCTIONS_TOTAL> known_function_offsets = {
@@ -99,7 +139,7 @@ struct known_functions
 
 // type info
 
-enum item_type_id
+enum item_type_id: int
 {
 	ITEM_TYPE_UNKNOWN = -1,
 	WEAPON = 0,
@@ -145,6 +185,33 @@ inline std::string item_type_id_to_string(item_type_id id)
 	default:
 		return "Unknown";
 	}
+}
+
+inline item_type_id item_type_id_from_string(const std::string& str)
+{
+	if (str == "Weapon")
+		return WEAPON;
+	if (str == "Armor")
+		return ARMOR;
+	if (str == "Artifact")
+		return ARTIFACT;
+	if (str == "Weapon Mod")
+		return WEAPON_MOD;
+	if (str == "Consumables")
+		return CONSUMABLES;
+	if (str == "Ammo")
+		return AMMO;
+	if (str == "Detector")
+		return DETECTOR;
+	if (str == "PDA")
+		return PDA;
+	if (str == "Miscellaneous")
+		return MISC;
+	if (str == "Mutant Parts")
+		return MUTANT_PARTS;
+	if (str == "NVG")
+		return NVG;
+	return ITEM_TYPE_UNKNOWN;
 }
 
 class s2_string
@@ -206,7 +273,7 @@ private:
 struct item_info
 {
 	s2_string name;
-	int type;
+	item_type_id type;
 	int secondary_key;
 	uint8_t modification;
 	uint8_t width;
