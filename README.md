@@ -140,8 +140,15 @@ Keybinds : 1
 ```
 
 ## Screenshots
-![](screenshots/1.png)
-![](screenshots/2.png)
+Vanilla does have gaps between items, because item size is ignored.
+![](screenshots/vanilla.png)
+
+So I added comparing by size from CoP and preset of the same name.<br>
+And gaps are gone. But CoP ignored quest flag of the items.
+![](screenshots/cop.png)
+
+If you want to change the order or enable/disable the rules, you still can do this in Custom preset:
+![](screenshots/custom.png)
 
 ## Credits
 
