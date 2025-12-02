@@ -1,5 +1,7 @@
 # Ruck Master — Advanced Inventory Sorting Mod for STALKER 2
 
+![](screenshots/title.jpg)
+
 **Ruck Master** is an advanced, fully configurable inventory sorting system for  
 **S.T.A.L.K.E.R. 2: Heart of Chornobyl**, implemented as a **UE4SS C++ mod**.
 
