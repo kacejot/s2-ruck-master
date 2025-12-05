@@ -123,19 +123,6 @@ using get_secondary_sort_key_t = int(__fastcall*)(uintptr_t);
 using get_item_name_t = void(__fastcall*)(uintptr_t, s2_string*);
 using compare_names_t = int(__fastcall*)(const wchar_t*, const wchar_t*);
 using free_s2string_t = void(__fastcall*)(void*);
-using attribute_comparator_t = std::function<std::strong_ordering(const item_info&, const item_info&)>;
-
-struct known_functions
-{
-	function_signature_t<get_global_state_t>          get_global_object_pool;
-	function_signature_t<get_item_by_descriptor_t>    get_item_by_descriptor;
-	function_signature_t<get_item_metadata_t>         get_item_metadata;
-	function_signature_t<get_weapon_from_item_t>      get_weapon_from_item;
-	function_signature_t<get_secondary_sort_key_t>    get_secondary_sort_key;
-	function_signature_t<get_item_name_t>             get_item_name;
-	function_signature_t<compare_names_t>             compare_names;
-	function_signature_t<free_s2string_t>             free_s2string;
-};
 
 // type info
 
@@ -217,12 +204,13 @@ inline item_type_id item_type_id_from_string(const std::string& str)
 class s2_string
 {
 public:
-	s2_string() : m_deleter(nullptr), m_ptr(nullptr), m_flag(0) {}
+	s2_string() : m_ptr(nullptr), m_flag(0), m_deleter(nullptr) {}
 
-	s2_string(s2_string&& other) noexcept : m_ptr(other.m_ptr), m_flag(other.m_flag)
+	s2_string(s2_string&& other) noexcept : m_ptr(other.m_ptr), m_flag(other.m_flag), m_deleter(nullptr)
 	{
 		other.m_ptr = nullptr;
 		other.m_flag = 0;
+		other.m_deleter = nullptr;
 	}
 
 	s2_string& operator=(s2_string&& other) noexcept
@@ -249,7 +237,7 @@ public:
 			m_deleter(m_ptr);
 	}
 
-	void set_deleter(function_signature_t<free_s2string_t> deleter)
+	void set_deleter(free_s2string_t deleter)
 	{
 		m_deleter = deleter;
 	}
@@ -267,7 +255,7 @@ public:
 private:
 	wchar_t* m_ptr; // UTF-16 char buffer
 	int m_flag;     // has_string / not_empty / maybe length?
-	function_signature_t<free_s2string_t> m_deleter;
+	free_s2string_t m_deleter;
 };
 
 struct item_info

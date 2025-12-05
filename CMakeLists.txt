@@ -2,22 +2,30 @@ cmake_minimum_required(VERSION 3.18)
 
 project(s2-ruck-master)
 
-add_compile_definitions(UE_BUILD_SHIPPING=1)
-add_compile_definitions(PLATFORM_WINDOWS PLATFORM_MICROSOFT OVERRIDE_PLATFORM_HEADER_NAME=Windows UBT_COMPILED_PLATFORM=Win64)
-
-add_subdirectory(deps/RE-UE4SS)
+add_subdirectory(deps/pluginloader)
 add_subdirectory(deps/minhook)
+add_subdirectory(deps/imgui)
 
-file(GLOB_RECURSE SOURCES
+file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
 )
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME} STATIC
     ${SOURCES}
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-    UE4SS
     minhook
+    imgui
+)
+
+target_compile_features(${PROJECT_NAME} PUBLIC
+    cxx_std_20
+)
+
+pluginloader_add(winmm STANDALONE_ROLE)
+
+target_link_libraries(pluginloader_winmm PUBLIC
+    ${PROJECT_NAME}
 )

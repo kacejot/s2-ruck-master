@@ -1,6 +1,26 @@
 #include "hooking.h"
 #include "MinHook.h"
-#include "print.h"
+
+std::string to_string(hooking_result result)
+{
+	switch (result)
+	{
+	case hooking_result::SUCCESS:
+		return "success";
+	case hooking_result::MINHOOK_INIT_FAILED:
+		return "MinHook initialization failed";
+	case hooking_result::CREATE_HOOK_FAILED:
+		return "failed to create hook";
+	case hooking_result::ENABLE_HOOK_FAILED:
+		return "failed to enable hook";
+	default:
+		return "unknown error";
+	}
+}
+
+hooking::hooking(context& ctx): m_ctx(ctx)
+{
+}
 
 hooking::~hooking()
 {
