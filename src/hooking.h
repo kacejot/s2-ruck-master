@@ -4,8 +4,8 @@
 #include <map>
 
 #include "type_traits.h"
-#include "global_context.h"
 #include "local_types.h"
+#include "context.h"
 
 enum class hooking_result
 {
@@ -15,22 +15,7 @@ enum class hooking_result
 	ENABLE_HOOK_FAILED,
 };
 
-inline RC::StringType to_string(hooking_result result)
-{
-	switch (result)
-	{
-	case hooking_result::SUCCESS:
-		return STR("success");
-	case hooking_result::MINHOOK_INIT_FAILED:
-		return STR("MinHook initialization failed");
-	case hooking_result::CREATE_HOOK_FAILED:
-		return STR("failed to create hook");
-	case hooking_result::ENABLE_HOOK_FAILED:
-		return STR("failed to enable hook");
-	default:
-		return STR("unknown error");
-	}
-}
+std::string to_string(hooking_result result);
 
 struct hook_info
 {
@@ -45,8 +30,10 @@ struct hook_info
 class hooking
 {
 public:
-	hooking_result init();
+	hooking(context& ctx);
 	~hooking();
+
+	hooking_result init();
 
 	template<known_function_id ID, typename Fn>
 	hooking_result add_hook(Fn&& cb)
@@ -63,7 +50,7 @@ private:
 	{
 		hook_info& hi = m_hooks[ID];
 		hi.offset = offset;
-		hi.address = get_ctx().game_base + offset;
+		hi.address = m_ctx.game_base + offset;
 
 		using cb_t = std::decay_t<Fn>;
 		hi.hook = (uintptr_t)(new cb_t(std::forward<Fn>(cb)));
@@ -127,5 +114,6 @@ private:
 
 private:
 	std::map<uint32_t, hook_info> m_hooks;
+	context& m_ctx;
 	bool m_initialized = false;
 };

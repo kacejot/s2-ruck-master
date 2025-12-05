@@ -1,5 +1,4 @@
 #include "config.h"
-#include "global_context.h"
 
 std::array<ruck_master_config, PRESETS_TOTAL> g_config_presets =
 {
