@@ -204,12 +204,13 @@ inline item_type_id item_type_id_from_string(const std::string& str)
 class s2_string
 {
 public:
-	s2_string() : m_deleter(nullptr), m_ptr(nullptr), m_flag(0) {}
+	s2_string() : m_ptr(nullptr), m_flag(0), m_deleter(nullptr) {}
 
-	s2_string(s2_string&& other) noexcept : m_ptr(other.m_ptr), m_flag(other.m_flag)
+	s2_string(s2_string&& other) noexcept : m_ptr(other.m_ptr), m_flag(other.m_flag), m_deleter(nullptr)
 	{
 		other.m_ptr = nullptr;
 		other.m_flag = 0;
+		other.m_deleter = nullptr;
 	}
 
 	s2_string& operator=(s2_string&& other) noexcept
