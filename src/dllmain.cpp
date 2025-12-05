@@ -1,55 +1,42 @@
 ﻿#include <iostream>
 #include <windows.h>
-#include <Mod/CppUserModBase.hpp>
-#include <UE4SSProgram.hpp>
 
 #include "comparator_hook.h"
+#include "context.h"
 #include "hooking.h"
-#include "print.h"
 #include "menu.h"
 
-class RuckMaster : public CppUserModBase
+class ruck_master
 {
 public:
-    RuckMaster()
+    ruck_master():
+        m_context{},
+        m_hooking{ m_context },
+		m_comparator_hook{ m_context },
+        m_menu{ m_context }
     {
-        ModName = STR("s2-ruck-master");
-        ModVersion = STR("0.1");
-        ModDescription = STR("s2-ruck-master is a S.T.A.L.K.E.R. 2 mod that enhances inventory sorting and provides fully customizable item-placement rules through an ImGui-based interface");
-        ModAuthors = STR("kacejot");
-        
-        UE4SS_ENABLE_IMGUI();
-
-        register_tab(STR("Ruck Master"), [](CppUserModBase* instance) {
-            static_cast<RuckMaster*>(instance)->RenderUI();
-        });
-
-        CHECK(m_hooking.init());
-        CHECK(m_hooking.add_hook<COMPARATOR>(comparator));
-    }
- 
-    void RenderUI()
-    {
-        RenderPresets();
-        ImGui::Separator();
-        RenderLists();
-        ImGui::Separator();
-        RenderFlags();
+        // TODO: check if success
+        // TODO: add logging (file & stdout)
+        m_hooking.init();
+        m_hooking.add_hook<COMPARATOR>(m_comparator_hook);
     }
 
 private:
+    context m_context;
 	hooking m_hooking;
+    comparator_hook m_comparator_hook;
+    menu m_menu;
 };
 
-extern "C"
-{
-    __declspec(dllexport) CppUserModBase* start_mod()
-    {
-        return new RuckMaster();
-    }
+ruck_master* g_ruck_master = nullptr;
 
-    __declspec(dllexport) void uninstall_mod(RC::CppUserModBase* mod)
-    {
-        delete mod;
-    }
+extern "C" void init_plugin(HMODULE h_module)
+{
+    UNREFERENCED_PARAMETER(h_module);
+    g_ruck_master = new ruck_master();
+}
+
+extern "C" void deinit_plugin()
+{
+    delete g_ruck_master;
 }
