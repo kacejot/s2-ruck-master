@@ -1,9 +1,12 @@
-[submodule "s2-ruck-master/deps/minhook"]
-	path = deps/minhook
-	url = git@github.com:TsudaKageyu/minhook.git
 [submodule "deps/pluginloader"]
 	path = deps/pluginloader
 	url = git@github.com:kacejot/pluginloader.git
-[submodule "deps/imgui/imgui"]
-	path = deps/imgui/imgui
-	url = https://github.com/ocornut/imgui.git
+[submodule "deps/dx12-imgui-overlay"]
+	path = deps/dx12-imgui-overlay
+	url = https://github.com/kacejot/dx12-imgui-overlay
+[submodule "deps/picojson"]
+	path = deps/picojson
+	url = https://github.com/kazuho/picojson
+[submodule "deps/mini"]
+	path = deps/mini
+	url = https://github.com/metayeti/mINI

@@ -1,10 +1,5 @@
 ﻿#include "menu.h"
-#include "context.h"
 #include "config.h"
-
-menu::menu(context& ctx): m_ctx(ctx) 
-{
-}
 
 void menu::render()
 {
@@ -20,22 +15,21 @@ void menu::render_presets()
     ImGui::Text("Presets:");
 
     ImGui::SetNextItemWidth(300);
-	auto current_preset = m_ctx.current_config_preset;
+    preset_id current_preset = g_config.current_preset();
     std::string preset_name_str = preset_id_to_string(current_preset);
-    const char* preset_name = preset_name_str.c_str();
 
-    if (ImGui::BeginCombo("##preset", preset_name))
+    if (ImGui::BeginCombo("##preset", preset_name_str.c_str()))
     {
         for (int i = 0; i < PRESETS_TOTAL; i++)
         {
-			preset_id p_id = (preset_id)i;
-            bool sel = (current_preset == p_id);
-            if (ImGui::Selectable(preset_id_to_string(p_id).c_str(), sel))
+            preset_id p_id = (preset_id)i;
+            bool selected = (current_preset == p_id);
+            if (ImGui::Selectable(preset_id_to_string(p_id).c_str(), selected))
             {
-                m_ctx.switch_preset(p_id);
+                g_config.select_preset(p_id);
             }
 
-            if (sel)
+            if (selected)
                 ImGui::SetItemDefaultFocus();
         }
         ImGui::EndCombo();
@@ -49,29 +43,35 @@ void menu::render_lists()
     ImGui::Columns(2);
     ImGui::Text("Rules");
     ImGui::SameLine();
-    render_help_button("?##rules_small_button", "Rule at the top of the list has the highest priority.\nIf rule considers two items equal, next rule in the list will process them.\nDrag and drop the rules to change their priority.\nClick on the rules to toggle them.\n\nNOTE: I'm not sure what \"Sort by secondary key\" is. I'm most certain that it is a durability for weapons.");
+    render_help_button("?##rules_small_button", 
+        "Rule at the top of the list has the highest priority.\n"
+        "If rule considers two items equal, next rule in the list will process them.\n"
+        "Drag and drop the rules to change their priority.\n"
+        "Click on the rules to toggle them.\n\n"
+        "NOTE: I'm not sure what \"Sort by secondary key\" is. "
+        "I'm most certain that it is a durability for weapons.");
 
     ImGui::BeginChild("rules_list", ImVec2(0, 500), true);
 
     for (int i = 0; i < RULES_TOTAL; i++)
     {
-        auto& [rule_id, rule_enabled] = m_ctx.config.sort_rules_order[i];
+        auto& [rule_id, rule_enabled] = g_config.sorting.sort_rules_order[i];
 
         if (!rule_enabled)
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
 
         bool clicked = ImGui::Selectable(sort_rule_id_to_readable_string(rule_id).c_str(), false);
 
         if (!rule_enabled)
             ImGui::PopStyleColor();
 
-        if (drag_reorder(m_ctx.config.sort_rules_order, i, "RULE_DRAG"))
-			m_ctx.switch_preset(CUSTOM);
+        if (drag_reorder(g_config.sorting.sort_rules_order, i, "RULE_DRAG"))
+            g_config.on_modified();
 
         if (clicked)
         {
             rule_enabled = !rule_enabled;
-			m_ctx.switch_preset(CUSTOM);
+            g_config.on_modified();
         }
     }
 
@@ -79,7 +79,10 @@ void menu::render_lists()
     ImGui::NextColumn();
     ImGui::Text("Item type priorities");
     ImGui::SameLine();
-    render_help_button("?##type_priorities_small_button", "NOTE: This list works only if \"Prioritize by type\" rule is active.\n\nItem type priorities in descending order.\nDrag and drop the items in the list to change their priority.");
+    render_help_button("?##type_priorities_small_button", 
+        "NOTE: This list works only if \"Prioritize by type\" rule is active.\n\n"
+        "Item type priorities in descending order.\n"
+        "Drag and drop the items in the list to change their priority.");
 
     if (!right_enabled)
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.3f);
@@ -88,11 +91,11 @@ void menu::render_lists()
 
     for (int i = 0; i < ITEM_TYPES_TOTAL; i++)
     {
-        item_type_id id = m_ctx.config.item_types_priority[i];
+        item_type_id id = g_config.sorting.item_types_priority[i];
         ImGui::Selectable(item_type_id_to_string(id).c_str(), false);
 
-        if (right_enabled && drag_reorder(m_ctx.config.item_types_priority, i, "TYPE_DRAG"))
-			m_ctx.switch_preset(CUSTOM);
+        if (right_enabled && drag_reorder(g_config.sorting.item_types_priority, i, "TYPE_DRAG"))
+            g_config.on_modified();
     }
 
     ImGui::EndChild();
@@ -112,16 +115,20 @@ void menu::render_help_button(const char* label, const char* text)
 
 void menu::render_flags()
 {
-    bool before = m_ctx.config.enable_logging;
-    if (ImGui::Checkbox("enable logs", &m_ctx.config.enable_logging))
-        if (m_ctx.config.enable_logging != before)
-            m_ctx.switch_preset(CUSTOM);
+    bool before = g_config.enable_logging;
+    if (ImGui::Checkbox("enable logs", &g_config.enable_logging))
+    {
+        if (g_config.enable_logging != before)
+            g_config.on_modified();
+    }
 }
 
 bool menu::is_rule_enabled(sort_rule_id id)
 {
-    for (auto& r : m_ctx.config.sort_rules_order)
-        if (r.first == id)
-            return r.second;
+    for (const auto& [rule_id, enabled] : g_config.sorting.sort_rules_order)
+    {
+        if (rule_id == id)
+            return enabled;
+    }
     return true;
 }

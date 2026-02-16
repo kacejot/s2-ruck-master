@@ -2,13 +2,11 @@
 #include <imgui.h>
 #include <array>
 
-struct context;
-enum sort_rule_id;
+#include "local_types.h"
 
 class menu
 {
 public:
-    menu(context& ctx);
     void render();
 
 private:
@@ -56,7 +54,4 @@ private:
 
         return false;
     }
-
-private:
-    context& m_ctx;
 };
