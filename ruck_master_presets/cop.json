@@ -1,0 +1,26 @@
+{
+    "name": "Call of Pripyat",
+    "description": "Sorting behavior similar to S.T.A.L.K.E.R.: Call of Pripyat",
+    "rules": [
+        { "id": "COMPARE_SIZE", "enabled": true },
+        { "id": "COMPARE_QUEST", "enabled": false },
+        { "id": "COMPARE_TYPE_PRIORITY", "enabled": true },
+        { "id": "COMPARE_AMMO_CALIBER", "enabled": true },
+        { "id": "COMPARE_SECONDARY_KEY", "enabled": true },
+        { "id": "COMPARE_NAME", "enabled": true }
+    ],
+    "item_types_priority": [
+        "Consumables",
+        "Ammo",
+        "YET_UNKNOWN",
+        "NVG",
+        "Weapon Mod",
+        "Detector",
+        "Artifact",
+        "Weapon",
+        "Armor",
+        "Miscellaneous",
+        "Mutant Parts"
+    ]
+}
+

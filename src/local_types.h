@@ -3,16 +3,10 @@
 #include <array>
 #include <string>
 
-#include "type_traits.h"
-
-// constants
-
 constexpr wchar_t g_empty_name[] = L"";
 
 constexpr uintptr_t g_priority_table_start_addr = 0x88AFC20;
 constexpr uintptr_t g_priority_table_size_addr = 0x88AFC28;
-
-// function info
 
 enum known_function_id
 {
@@ -77,10 +71,10 @@ inline std::string sort_rule_id_to_string(sort_rule_id id)
 			return "COMPARE_SECONDARY_KEY";
 		case COMPARE_NAME:
 			return "COMPARE_NAME";
-		return "";
+		default:
+			return "";
 	}
 }
-
 
 inline sort_rule_id sort_rule_id_from_string(const std::string& str)
 {
@@ -124,8 +118,6 @@ using get_item_name_t = void(__fastcall*)(uintptr_t, s2_string*);
 using compare_names_t = int(__fastcall*)(const wchar_t*, const wchar_t*);
 using free_s2string_t = void(__fastcall*)(void*);
 
-// type info
-
 enum item_type_id: int
 {
 	ITEM_TYPE_UNKNOWN = -1,
@@ -136,7 +128,7 @@ enum item_type_id: int
 	CONSUMABLES,
 	AMMO,
 	DETECTOR,
-	PDA, // TODO: Maybe add log to track this specific type usage
+	UNKNOWN, // TODO: Maybe add log to track this specific type usage
 	MISC,
 	MUTANT_PARTS,
 	NVG,
@@ -161,8 +153,8 @@ inline std::string item_type_id_to_string(item_type_id id)
 		return "Ammo";
 	case DETECTOR:
 		return "Detector";
-	case PDA:
-		return "PDA";
+	case UNKNOWN:
+		return "YET_UNKNOWN";
 	case MISC:
 		return "Miscellaneous";
 	case MUTANT_PARTS:
@@ -191,7 +183,7 @@ inline item_type_id item_type_id_from_string(const std::string& str)
 	if (str == "Detector")
 		return DETECTOR;
 	if (str == "PDA")
-		return PDA;
+		return UNKNOWN;
 	if (str == "Miscellaneous")
 		return MISC;
 	if (str == "Mutant Parts")
@@ -253,7 +245,7 @@ public:
 	}
 
 private:
-	wchar_t* m_ptr; // UTF-16 char buffer
+	wchar_t* m_ptr;
 	int m_flag;     // has_string / not_empty / maybe length?
 	free_s2string_t m_deleter;
 };
