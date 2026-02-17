@@ -4,9 +4,6 @@
 [submodule "deps/dx12-imgui-overlay"]
 	path = deps/dx12-imgui-overlay
 	url = https://github.com/kacejot/dx12-imgui-overlay
-[submodule "deps/picojson"]
-	path = deps/picojson
-	url = https://github.com/kazuho/picojson
 [submodule "deps/mini"]
 	path = deps/mini
 	url = https://github.com/metayeti/mINI

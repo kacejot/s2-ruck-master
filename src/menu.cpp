@@ -1,5 +1,6 @@
 ﻿#include "menu.h"
 #include "config.h"
+#include <overlay.h>
 
 void menu::render()
 {
@@ -7,7 +8,6 @@ void menu::render()
     ImGui::Separator();
     render_lists();
     ImGui::Separator();
-    render_flags();
 }
 
 void menu::render_presets()
@@ -111,16 +111,6 @@ void menu::render_help_button(const char* label, const char* text)
     ImGui::SmallButton(label);
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("%s", text);
-}
-
-void menu::render_flags()
-{
-    bool before = g_config.enable_logging;
-    if (ImGui::Checkbox("enable logs", &g_config.enable_logging))
-    {
-        if (g_config.enable_logging != before)
-            g_config.on_modified();
-    }
 }
 
 bool menu::is_rule_enabled(sort_rule_id id)
