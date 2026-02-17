@@ -1,9 +1,20 @@
 ﻿#include "menu.h"
 #include "config.h"
+#include "comparator_hook.h"
+#include "signature_validator.h"
 #include <overlay.h>
+#include <thread>
+#include <windows.h>
 
 void menu::render()
 {
+    std::string error = get_comparator_error();
+    if (!error.empty())
+    {
+        render_error(error);
+        return;
+    }
+    
     render_presets();
     ImGui::Separator();
     render_lists();
@@ -121,4 +132,88 @@ bool menu::is_rule_enabled(sort_rule_id id)
             return enabled;
     }
     return true;
+}
+
+void menu::render_error(const std::string& error)
+{
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+    ImGui::TextWrapped("Mod is not working!");
+    ImGui::PopStyleColor();
+    
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+    
+    ImGui::TextWrapped("Game version is not supported or addresses are invalid.");
+    ImGui::Spacing();
+    
+    ImGui::TextWrapped("Details:");
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
+    ImGui::TextWrapped("%s", error.c_str());
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
+    
+    if (g_config.last_scan_failed)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.2f, 0.2f, 1.0f));
+        ImGui::TextWrapped("Previous scan attempt failed. Signatures not found.");
+        ImGui::PopStyleColor();
+        ImGui::Spacing();
+    }
+    
+    ImGui::Separator();
+    ImGui::Spacing();
+    
+    if (m_scanning.load())
+    {
+        ImGui::TextWrapped("Scanning memory for signatures...");
+        ImGui::ProgressBar(m_scan_progress.load(), ImVec2(-1, 0));
+        ImGui::Spacing();
+    }
+    else
+    {
+        ImGui::TextWrapped("You can try to scan the game memory for correct addresses.");
+        ImGui::TextWrapped("Warning: This may take 30-60 seconds!");
+        ImGui::Spacing();
+        
+        if (ImGui::Button("Scan for Signatures", ImVec2(-1, 0)))
+        {
+            m_scanning.store(true);
+            m_scan_progress.store(0.0f);
+            
+            std::thread([this]() {
+                uintptr_t game_base = (uintptr_t)GetModuleHandleA(nullptr);
+                ScanResult result = scan_all_signatures(game_base, m_scan_progress);
+                
+                if (result.success)
+                {
+                    g_config.save_cached_offsets(result.offsets);
+                    
+                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                    
+                    if (reinit_comparator())
+                    {
+                        m_scanning.store(false);
+                    }
+                    else
+                    {
+                        ExitProcess(0);
+                    }
+                }
+                else
+                {
+                    g_config.mark_scan_failed();
+                    m_scanning.store(false);
+                }
+            }).detach();
+        }
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::TextWrapped("Other solutions:");
+        ImGui::BulletText("Check for mod updates");
+        ImGui::BulletText("Verify game version");
+        ImGui::BulletText("Report this issue to mod author");
+    }
 }

@@ -1,5 +1,6 @@
 ﻿#include "comparator_hook.h"
 #include "config.h"
+#include "signature_validator.h"
 
 #include <windows.h>
 #include <map>
@@ -7,7 +8,8 @@
 
 namespace
 {
-    // Game function pointers (initialized by init_comparator)
+    std::string g_error_message;
+
     get_global_state_t          g_get_global_object_pool = nullptr;
     get_item_by_descriptor_t    g_get_item_by_descriptor = nullptr;
     get_item_metadata_t         g_get_item_metadata = nullptr;
@@ -17,11 +19,9 @@ namespace
     compare_names_t             g_compare_names = nullptr;
     free_s2string_t             g_free_s2string = nullptr;
 
-    // Original comparator function (for calling original logic)
     using comparator_t = bool(__fastcall*)(uint32_t*, uint32_t*);
     comparator_t g_original_comparator = nullptr;
     
-    // Game base address
     uintptr_t g_game_base = 0;
 
     inline bool descriptor_is_valid(uint32_t descriptor)
@@ -133,6 +133,14 @@ namespace
 void init_comparator(uintptr_t game_base)
 {
     g_game_base = game_base;
+    g_error_message.clear();
+    
+    if (g_config.has_cached_offsets)
+        known_function_offsets = g_config.cached_offsets;
+    
+    g_error_message = validate_all_addresses(game_base);
+    if (!g_error_message.empty())
+        return;
     
     g_get_global_object_pool = get_global_state_t(game_base + known_function_offsets[GET_GLOBAL_STATE]);
     g_get_item_by_descriptor = get_item_by_descriptor_t(game_base + known_function_offsets[GET_ITEM_BY_DESCRIPTOR]);
@@ -145,8 +153,25 @@ void init_comparator(uintptr_t game_base)
 
     MH_Initialize();
     void* target = (void*)(game_base + known_function_offsets[COMPARATOR]);
-    MH_CreateHook(target, &comparator_hook, (LPVOID*)&g_original_comparator);
-    MH_EnableHook(target);
+    MH_STATUS status = MH_CreateHook(target, &comparator_hook, (LPVOID*)&g_original_comparator);
+    if (status != MH_OK) {
+        g_error_message = "Failed to create hook (MH_STATUS: " + std::to_string(status) + ")";
+        return;
+    }
+
+    status = MH_EnableHook(target);
+    if (status != MH_OK)
+        g_error_message = "Failed to enable hook (MH_STATUS: " + std::to_string(status) + ")";
+}
+
+bool reinit_comparator()
+{
+    if (g_original_comparator)
+        return true;
+    
+    init_comparator(g_game_base);
+    
+    return g_error_message.empty();
 }
 
 void deinit_comparator()
@@ -159,6 +184,11 @@ void deinit_comparator()
     }
     
     MH_Uninitialize();
+}
+
+std::string get_comparator_error()
+{
+    return g_error_message;
 }
 
 bool __fastcall comparator_hook(uint32_t* left_ptr, uint32_t* right_ptr)
