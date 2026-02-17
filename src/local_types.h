@@ -111,7 +111,7 @@ inline sort_rule_id sort_rule_id_from_string(const std::string& str)
 }
 
 inline std::array<uintptr_t, FUNCTIONS_TOTAL> known_function_offsets = {
-	0x59F1528, // comparator
+	0x19F1528, // comparator
 	0x2480D98, // get global state
 	0x166FC2C, // get item by descriptor
 	0x106EB20, // get item metadata
