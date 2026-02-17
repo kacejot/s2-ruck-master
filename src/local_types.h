@@ -94,15 +94,15 @@ inline sort_rule_id sort_rule_id_from_string(const std::string& str)
 }
 
 static constexpr std::array<uintptr_t, FUNCTIONS_TOTAL> known_function_offsets = {
-	0x1240FC0, // comparator
-	0x18148C4, // get global state
-	0x143F2D0, // get item by descriptor
-	0x0AF4818, // get item metadata
-	0x11BFBF8, // get weapon from item
-	0x10BA52C, // get secondary sort key
-	0x1241208, // get item name
-	0x293F9A4, // compare item names
-	0x0B530D4, // free item name
+	0x19F1528, // comparator
+	0x2480D98, // get global state
+	0x166FC2C, // get item by descriptor
+	0x106EB20, // get item metadata
+	0x11BE0E4, // get weapon from item
+	0x19F2570, // get secondary sort key
+	0x20EE86C, // get item name
+	0x3605504, // compare item names
+	0x0AEA3D8, // free item name
 };
 
 class s2_string;
@@ -128,7 +128,7 @@ enum item_type_id: int
 	CONSUMABLES,
 	AMMO,
 	DETECTOR,
-	UNKNOWN, // TODO: Maybe add log to track this specific type usage
+	PDA, // PDA and quest-related items
 	MISC,
 	MUTANT_PARTS,
 	NVG,
@@ -153,8 +153,8 @@ inline std::string item_type_id_to_string(item_type_id id)
 		return "Ammo";
 	case DETECTOR:
 		return "Detector";
-	case UNKNOWN:
-		return "YET_UNKNOWN";
+	case PDA:
+		return "PDA";
 	case MISC:
 		return "Miscellaneous";
 	case MUTANT_PARTS:
@@ -183,7 +183,7 @@ inline item_type_id item_type_id_from_string(const std::string& str)
 	if (str == "Detector")
 		return DETECTOR;
 	if (str == "PDA")
-		return UNKNOWN;
+		return PDA;
 	if (str == "Miscellaneous")
 		return MISC;
 	if (str == "Mutant Parts")

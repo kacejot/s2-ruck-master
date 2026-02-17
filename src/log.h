@@ -1,22 +1,15 @@
 #pragma once
 #include <fstream>
 #include <format>
+#include "config.h"
 
-inline std::ofstream g_log("s2_overlay_log.txt", std::ios::out | std::ios::trunc);
-
-#if 1 
+inline std::ofstream g_log("ruck_master_log.txt", std::ios::out | std::ios::trunc);
 
 #define LOG(fmt, ...)                                                    \
     do {                                                                 \
-        if (g_log) {                                                     \
+        if (g_config.enable_logging && g_log) {                          \
             auto _msg = std::format(fmt, ##__VA_ARGS__);                 \
             g_log << _msg << std::endl;                                  \
             g_log.flush();                                               \
         }                                                                \
     } while (0)
-
-#else
-
-#define LOG(fmt, ...)
-
-#endif

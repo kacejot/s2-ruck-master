@@ -13,7 +13,6 @@ private:
     void render_presets();
     void render_lists();
     void render_help_button(const char* label, const char* text);
-    void render_flags();
     bool is_rule_enabled(sort_rule_id id);
 
     template<typename T, size_t N>

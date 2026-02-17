@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <map>
+#include <MinHook.h>
 
 namespace
 {
@@ -15,6 +16,13 @@ namespace
     get_item_name_t             g_get_item_name = nullptr;
     compare_names_t             g_compare_names = nullptr;
     free_s2string_t             g_free_s2string = nullptr;
+
+    // Original comparator function (for calling original logic)
+    using comparator_t = bool(__fastcall*)(uint32_t*, uint32_t*);
+    comparator_t g_original_comparator = nullptr;
+    
+    // Game base address
+    uintptr_t g_game_base = 0;
 
     inline bool descriptor_is_valid(uint32_t descriptor)
     {
@@ -124,6 +132,8 @@ namespace
 
 void init_comparator(uintptr_t game_base)
 {
+    g_game_base = game_base;
+    
     g_get_global_object_pool = get_global_state_t(game_base + known_function_offsets[GET_GLOBAL_STATE]);
     g_get_item_by_descriptor = get_item_by_descriptor_t(game_base + known_function_offsets[GET_ITEM_BY_DESCRIPTOR]);
     g_get_item_metadata = get_item_metadata_t(game_base + known_function_offsets[GET_ITEM_METADATA]);
@@ -132,6 +142,23 @@ void init_comparator(uintptr_t game_base)
     g_get_item_name = get_item_name_t(game_base + known_function_offsets[GET_ITEM_NAME]);
     g_compare_names = compare_names_t(game_base + known_function_offsets[COMPARE_ITEM_NAMES]);
     g_free_s2string = free_s2string_t(game_base + known_function_offsets[FREE_ITEM_NAME]);
+
+    MH_Initialize();
+    void* target = (void*)(game_base + known_function_offsets[COMPARATOR]);
+    MH_CreateHook(target, &comparator_hook, (LPVOID*)&g_original_comparator);
+    MH_EnableHook(target);
+}
+
+void deinit_comparator()
+{
+    if (g_original_comparator)
+    {
+        void* target = (void*)(g_game_base + known_function_offsets[COMPARATOR]);
+        MH_DisableHook(target);
+        MH_RemoveHook(target);
+    }
+    
+    MH_Uninitialize();
 }
 
 bool __fastcall comparator_hook(uint32_t* left_ptr, uint32_t* right_ptr)

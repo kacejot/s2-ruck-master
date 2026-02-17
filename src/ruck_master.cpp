@@ -21,6 +21,9 @@ public:
         uintptr_t game_base = (uintptr_t)GetModuleHandleA(nullptr);
         init_comparator(game_base);
 
+        if (g_config.enable_logging)
+            overlay::enable_logging("ruck_master_log.txt");
+
         overlay::init();
         overlay::set_toggle_key(g_config.toggle_key);
         overlay::set_render_callback(render_callback);
@@ -29,6 +32,7 @@ public:
     ~ruck_master()
     {
         overlay::deinit();
+        deinit_comparator();
     }
 
     void render(IDXGISwapChain3*, UINT, UINT)

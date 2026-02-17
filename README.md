@@ -60,9 +60,9 @@ drag-and-drop reordering of all item type categories (weapon, ammo, artifact, et
 
 ### Presets
 Three built-in presets:
-- **Vanilla** — matches STALKER 2’s sorting
-- **CoP** — Call of Pripyat–style behavior
-- **Custom** — fully editable; saved to `ruck_master.ini`
+- **Vanilla** — matches STALKER 2's default sorting behavior
+- **CoP** — Call of Pripyat–style behavior (defined in code)
+- **Custom** — fully editable; automatically saved to `ruck_master.ini`
 
 ### INI-based Persistence
 Your custom configuration is saved automatically and restored on game load.
@@ -103,12 +103,14 @@ Now place the mod DLL:
 main.dll -> S.T.A.L.K.E.R. 2 Heart of Chornobyl\Stalker2\Binaries\Win64\ue4ss\Mods\s2-ruck-master\dlls
 ```
 
-### 3. Place the configuration file
+### 3. Place the configuration file (optional)
 
-The mod will load and save configuration from:
+The mod will create and manage `ruck_master.ini` automatically in:
 ```
 S.T.A.L.K.E.R. 2 Heart of Chornobyl\Stalker2\Binaries\Win64\ruck_master.ini
 ```
+
+You can optionally place a template INI file from the repository to start with specific settings.
 
 ### 4. Enable the mod in UE4SS
 Open:

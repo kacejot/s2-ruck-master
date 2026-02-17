@@ -1,11 +1,11 @@
 #include "config.h"
+#include "presets.h"
 
 #include <filesystem>
-#include <fstream>
 #include <sstream>
 
-#include <picojson.h>
 #include <mini/ini.h>
+
 std::string preset_id_to_string(preset_id id)
 {
     switch (id)
@@ -36,10 +36,7 @@ config_manager g_config;
 
 config_manager::config_manager()
 {
-    sorting_preset default_preset;
-    if (load_preset_from_json(VANILLA, default_preset))
-        sorting = default_preset;
-    
+    sorting = get_vanilla_preset();
     load_settings();
 }
 
@@ -54,13 +51,7 @@ void config_manager::select_preset(preset_id id)
     if (id == _preset_id)
         return;
 
-    if (id != CUSTOM)
-    {
-        sorting_preset preset;
-        if (load_preset_from_json(id, preset))
-            sorting = preset;
-    }
-
+    load_preset(id);
     _preset_id = id;
     _is_dirty = true;
     save();
@@ -78,6 +69,11 @@ void config_manager::on_modified()
 void config_manager::save()
 {
     save_settings();
+    
+    // Save custom preset to INI
+    if (_preset_id == CUSTOM)
+        save_custom_preset();
+    
     _is_dirty = false;
 }
 
@@ -86,23 +82,9 @@ void config_manager::save_settings()
     mINI::INIFile file(get_ini_path());
     mINI::INIStructure ini;
 
-    if (!file.read(ini))
-        return;
-
     ini["settings"]["preset"] = preset_id_to_string(_preset_id);
-
-    if (_preset_id == CUSTOM)
-    {
-        for (const auto& [rule_id, enabled] : sorting.sort_rules_order)
-        {
-            ini["custom_rules"][sort_rule_id_to_string(rule_id)] = enabled ? "1" : "0";
-        }
-
-        for (size_t i = 0; i < sorting.item_types_priority.size(); i++)
-        {
-            ini["custom_item_priority"][std::to_string(i)] = item_type_id_to_string(sorting.item_types_priority[i]);
-        }
-    }
+    ini["settings"]["toggle_key"] = key_to_string(toggle_key);
+    ini["settings"]["enable_logging"] = enable_logging ? "1" : "0";
 
     file.write(ini);
 }
@@ -125,12 +107,7 @@ void config_manager::load_settings()
             if (id < PRESETS_TOTAL)
             {
                 _preset_id = id;
-                if (id != CUSTOM)
-                {
-                    sorting_preset preset;
-                    if (load_preset_from_json(id, preset))
-                        sorting = preset;
-                }
+                load_preset(id);
             }
         }
 
@@ -144,108 +121,106 @@ void config_manager::load_settings()
             enable_logging = (settings.get("enable_logging") == "1");
         }
     }
+}
 
-    if (_preset_id == CUSTOM)
+void config_manager::load_preset(preset_id id)
+{
+    switch (id)
     {
-        if (ini.has("custom_rules"))
-        {
-            const auto& rules = ini["custom_rules"];
-            for (auto& [rule_id, enabled] : sorting.sort_rules_order)
-            {
-                std::string key = sort_rule_id_to_string(rule_id);
-                if (rules.has(key))
-                {
-                    enabled = (rules.get(key) == "1");
-                }
-            }
-        }
-
-        if (ini.has("custom_item_priority"))
-        {
-            const auto& priority = ini["custom_item_priority"];
-            for (size_t i = 0; i < sorting.item_types_priority.size(); i++)
-            {
-                std::string key = std::to_string(i);
-                if (priority.has(key))
-                {
-                    item_type_id type = item_type_id_from_string(priority.get(key));
-                    if (type != ITEM_TYPE_UNKNOWN)
-                    {
-                        sorting.item_types_priority[i] = type;
-                    }
-                }
-            }
-        }
+    case VANILLA:
+        sorting = get_vanilla_preset();
+        break;
+    case COP:
+        sorting = get_cop_preset();
+        break;
+    case CUSTOM:
+        load_custom_preset();
+        break;
+    default:
+        sorting = get_vanilla_preset();
+        break;
     }
 }
 
-bool config_manager::load_preset_from_json(preset_id id, sorting_preset& out)
+void config_manager::save_custom_preset()
 {
-    if (id == CUSTOM)
-        return false;
+    mINI::INIFile file(get_ini_path());
+    mINI::INIStructure ini;
+    
+    // Load existing INI
+    file.read(ini);
 
-    std::ifstream f(get_preset_path(id));
-    if (!f)
-        return false;
-
-    std::string json_str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-
-    picojson::value root;
-    std::string err = picojson::parse(root, json_str);
-    if (!err.empty() || !root.is<picojson::object>())
-        return false;
-
-    const auto& obj = root.get<picojson::object>();
-
-    // Parse rules array
-    auto rules_it = obj.find("rules");
-    if (rules_it != obj.end() && rules_it->second.is<picojson::array>())
+    // Save sort rules
+    for (size_t i = 0; i < sorting.sort_rules_order.size(); i++)
     {
-        const auto& rules = rules_it->second.get<picojson::array>();
-        for (size_t i = 0; i < rules.size() && i < RULES_TOTAL; i++)
+        const auto& [rule_id, enabled] = sorting.sort_rules_order[i];
+        std::string key = "rule_" + std::to_string(i);
+        ini["custom_rules"][key] = sort_rule_id_to_string(rule_id) + "," + (enabled ? "1" : "0");
+    }
+
+    // Save item type priorities
+    for (size_t i = 0; i < sorting.item_types_priority.size(); i++)
+    {
+        std::string key = "type_" + std::to_string(i);
+        ini["custom_item_priority"][key] = item_type_id_to_string(sorting.item_types_priority[i]);
+    }
+
+    file.write(ini);
+}
+
+void config_manager::load_custom_preset()
+{
+    mINI::INIFile file(get_ini_path());
+    mINI::INIStructure ini;
+
+    if (!file.read(ini))
+    {
+        // No custom preset, use vanilla as fallback
+        sorting = get_vanilla_preset();
+        return;
+    }
+
+    // Load sort rules
+    if (ini.has("custom_rules"))
+    {
+        const auto& rules = ini["custom_rules"];
+        for (size_t i = 0; i < sorting.sort_rules_order.size(); i++)
         {
-            if (!rules[i].is<picojson::object>())
-                continue;
-
-            const auto& rule_obj = rules[i].get<picojson::object>();
-
-            auto id_it = rule_obj.find("id");
-            auto enabled_it = rule_obj.find("enabled");
-
-            if (id_it != rule_obj.end() && id_it->second.is<std::string>())
+            std::string key = "rule_" + std::to_string(i);
+            if (rules.has(key))
             {
-                sort_rule_id rule_id = sort_rule_id_from_string(id_it->second.get<std::string>());
-                bool enabled = (enabled_it != rule_obj.end() && enabled_it->second.is<bool>()) 
-                    ? enabled_it->second.get<bool>() 
-                    : true;
-
-                if (rule_id != SORT_RULE_ID_INVALID)
+                std::string value = rules.get(key);
+                size_t comma = value.find(',');
+                if (comma != std::string::npos)
                 {
-                    out.sort_rules_order[i] = { rule_id, enabled };
+                    std::string rule_str = value.substr(0, comma);
+                    std::string enabled_str = value.substr(comma + 1);
+                    
+                    sort_rule_id rule_id = sort_rule_id_from_string(rule_str);
+                    bool enabled = (enabled_str == "1");
+                    
+                    if (rule_id != SORT_RULE_ID_INVALID)
+                        sorting.sort_rules_order[i] = { rule_id, enabled };
                 }
             }
         }
     }
 
-    // Parse item_types_priority array
-    auto types_it = obj.find("item_types_priority");
-    if (types_it != obj.end() && types_it->second.is<picojson::array>())
+    // Load item type priorities
+    if (ini.has("custom_item_priority"))
     {
-        const auto& types = types_it->second.get<picojson::array>();
-        for (size_t i = 0; i < types.size() && i < ITEM_TYPES_TOTAL; i++)
+        const auto& types = ini["custom_item_priority"];
+        for (size_t i = 0; i < sorting.item_types_priority.size(); i++)
         {
-            if (!types[i].is<std::string>())
-                continue;
-
-            item_type_id type = item_type_id_from_string(types[i].get<std::string>());
-            if (type != ITEM_TYPE_UNKNOWN)
+            std::string key = "type_" + std::to_string(i);
+            if (types.has(key))
             {
-                out.item_types_priority[i] = type;
+                item_type_id type = item_type_id_from_string(types.get(key));
+                if (type != ITEM_TYPE_UNKNOWN)
+                    sorting.item_types_priority[i] = type;
             }
         }
     }
-
-    return true;
 }
 
 std::string config_manager::get_ini_path() const
@@ -258,33 +233,6 @@ std::string config_manager::get_ini_path() const
     return p.string();
 }
 
-std::string config_manager::get_presets_dir() const
-{
-    char buffer[MAX_PATH];
-    GetModuleFileNameA(nullptr, buffer, MAX_PATH);
-
-    std::filesystem::path p(buffer);
-    p = p.parent_path() / "ruck_master_presets";
-    return p.string();
-}
-
-std::string config_manager::get_preset_path(preset_id id) const
-{
-    std::string filename;
-    switch (id)
-    {
-    case VANILLA:
-        filename = "vanilla.json";
-        break;
-    case COP:
-        filename = "cop.json";
-        break;
-    default:
-        return "";
-    }
-
-    return (std::filesystem::path(get_presets_dir()) / filename).string();
-}
 
 std::string config_manager::key_to_string(UINT vk_code)
 {

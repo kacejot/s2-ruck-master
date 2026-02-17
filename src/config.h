@@ -40,11 +40,11 @@ public:
 private:
     void load_settings();
     void save_settings();
-    bool load_preset_from_json(preset_id id, sorting_preset& out);
+    void load_preset(preset_id id);
+    void save_custom_preset();
+    void load_custom_preset();
     
     std::string get_ini_path() const;
-    std::string get_preset_path(preset_id id) const;
-    std::string get_presets_dir() const;
 
     // Key serialization
     static std::string key_to_string(UINT vk_code);
