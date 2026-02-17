@@ -1,6 +1,8 @@
 #pragma once
 #include <imgui.h>
 #include <array>
+#include <string>
+#include <atomic>
 
 #include "local_types.h"
 
@@ -12,8 +14,12 @@ public:
 private:
     void render_presets();
     void render_lists();
+    void render_error(const std::string& error);
     void render_help_button(const char* label, const char* text);
     bool is_rule_enabled(sort_rule_id id);
+    
+    std::atomic<bool> m_scanning = false;
+    std::atomic<float> m_scan_progress = 0.0f;
 
     template<typename T, size_t N>
     bool drag_reorder(std::array<T, N>& arr, int index, const char* id)

@@ -41,17 +41,17 @@ const sorting_preset& get_cop_preset()
             {COMPARE_NAME, true}
         }},
         .item_types_priority = {{
-            CONSUMABLES,
-            AMMO,
-            PDA,
-            NVG,
-            WEAPON_MOD,
-            DETECTOR,
-            ARTIFACT,
             WEAPON,
             ARMOR,
+            WEAPON_MOD,
+            AMMO,
+            NVG,
+            DETECTOR,
+            PDA,
+            ARTIFACT,
+            MUTANT_PARTS,
+            CONSUMABLES, 
             MISC,
-            MUTANT_PARTS
         }}
     };
     return preset;

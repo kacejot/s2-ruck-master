@@ -22,6 +22,23 @@ enum known_function_id
 	FUNCTIONS_TOTAL
 };
 
+inline const char* known_function_id_to_string(known_function_id id)
+{
+	switch (id)
+	{
+	case COMPARATOR: return "Comparator";
+	case GET_GLOBAL_STATE: return "GetGlobalState";
+	case GET_ITEM_BY_DESCRIPTOR: return "GetItemByDescriptor";
+	case GET_ITEM_METADATA: return "GetItemMetadata";
+	case GET_WEAPON_FROM_ITEM: return "GetWeaponFromItem";
+	case GET_SECONDARY_SORT_KEY: return "GetSecondarySortKey";
+	case GET_ITEM_NAME: return "GetItemName";
+	case COMPARE_ITEM_NAMES: return "CompareItemNames";
+	case FREE_ITEM_NAME: return "FreeItemName";
+	default: return "Unknown";
+	}
+}
+
 enum sort_rule_id
 {
 	SORT_RULE_ID_INVALID = -1,
@@ -93,8 +110,8 @@ inline sort_rule_id sort_rule_id_from_string(const std::string& str)
 	return SORT_RULE_ID_INVALID;
 }
 
-static constexpr std::array<uintptr_t, FUNCTIONS_TOTAL> known_function_offsets = {
-	0x19F1528, // comparator
+inline std::array<uintptr_t, FUNCTIONS_TOTAL> known_function_offsets = {
+	0x59F1528, // comparator
 	0x2480D98, // get global state
 	0x166FC2C, // get item by descriptor
 	0x106EB20, // get item metadata

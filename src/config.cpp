@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <sstream>
+#include <iomanip>
 
 #include <mini/ini.h>
 
@@ -38,12 +39,89 @@ config_manager::config_manager()
 {
     sorting = get_vanilla_preset();
     load_settings();
+    load_cached_offsets();
 }
 
 config_manager::~config_manager()
 {
     if (_is_dirty)
         save();
+}
+
+void config_manager::load_cached_offsets()
+{
+    mINI::INIFile file(get_ini_path());
+    mINI::INIStructure ini;
+
+    if (!file.read(ini) || !ini.has("cached_offsets"))
+    {
+        has_cached_offsets = false;
+        return;
+    }
+
+    const auto& section = ini["cached_offsets"];
+    
+    for (int i = 0; i < FUNCTIONS_TOTAL; i++)
+    {
+        known_function_id func_id = static_cast<known_function_id>(i);
+        std::string key = known_function_id_to_string(func_id);
+        
+        if (section.has(key))
+        {
+            try {
+                cached_offsets[func_id] = std::stoull(section.get(key), nullptr, 16);
+            } catch (...) {
+                has_cached_offsets = false;
+                return;
+            }
+        }
+        else
+        {
+            has_cached_offsets = false;
+            return;
+        }
+    }
+    
+    has_cached_offsets = true;
+    last_scan_failed = section.has("scan_failed") && section.get("scan_failed") == "1";
+}
+
+void config_manager::save_cached_offsets(const std::array<uintptr_t, FUNCTIONS_TOTAL>& offsets)
+{
+    mINI::INIFile file(get_ini_path());
+    mINI::INIStructure ini;
+    
+    file.read(ini);
+    
+    for (int i = 0; i < FUNCTIONS_TOTAL; i++)
+    {
+        known_function_id func_id = static_cast<known_function_id>(i);
+        std::string key = known_function_id_to_string(func_id);
+        
+        std::ostringstream oss;
+        oss << "0x" << std::hex << std::uppercase << offsets[func_id];
+        ini["cached_offsets"][key] = oss.str();
+    }
+    
+    ini["cached_offsets"]["scan_failed"] = "0";
+    
+    file.write(ini);
+    
+    cached_offsets = offsets;
+    has_cached_offsets = true;
+    last_scan_failed = false;
+}
+
+void config_manager::mark_scan_failed()
+{
+    mINI::INIFile file(get_ini_path());
+    mINI::INIStructure ini;
+    
+    file.read(ini);
+    ini["cached_offsets"]["scan_failed"] = "1";
+    file.write(ini);
+    
+    last_scan_failed = true;
 }
 
 void config_manager::select_preset(preset_id id)

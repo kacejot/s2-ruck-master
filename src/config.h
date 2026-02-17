@@ -27,6 +27,10 @@ public:
     sorting_preset sorting;
     bool enable_logging = false;
     UINT toggle_key = VK_OEM_MINUS;
+    
+    std::array<uintptr_t, FUNCTIONS_TOTAL> cached_offsets = {};
+    bool has_cached_offsets = false;
+    bool last_scan_failed = false;
 
     config_manager();
     ~config_manager();
@@ -36,6 +40,10 @@ public:
     void select_preset(preset_id id);
     void on_modified();
     void save();
+    
+    void load_cached_offsets();
+    void save_cached_offsets(const std::array<uintptr_t, FUNCTIONS_TOTAL>& offsets);
+    void mark_scan_failed();
 
 private:
     void load_settings();
@@ -46,7 +54,6 @@ private:
     
     std::string get_ini_path() const;
 
-    // Key serialization
     static std::string key_to_string(UINT vk_code);
     static UINT string_to_key(const std::string& str);
 
