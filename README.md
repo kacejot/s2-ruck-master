@@ -1,22 +1,32 @@
-# Ruck Master — Advanced Inventory Sorting Mod for STALKER 2
+# Ruck Master - Inventory Sorting Mod for STALKER 2
 
 ![](screenshots/title.jpg)
 
-**Ruck Master** is an advanced, fully configurable inventory sorting system for  
-**S.T.A.L.K.E.R. 2: Heart of Chornobyl**, implemented as a **UE4SS C++ mod**.
+**Ruck Master** is a configurable inventory sorting system for  
+**S.T.A.L.K.E.R. 2: Heart of Chornobyl**
 
-It replaces the game's internal comparator with a modular, rule-based sorting pipeline  
-that is fully customizable in real time via an ImGui UI panel.
+It replaces the game's internal comparator with a rule-based sorting pipeline  
+that is customizable in real time via an ImGui UI panel.
 
-This project provides:
+## Installation
 
-- A complete re-implementation of the game’s item comparator in C++
-- Modular sorting rules with deterministic ordering
-- Drag-and-drop reordering of rules and item type priorities
-- Live configuration via ImGui (accessible through UE4SS Debug Tools)
-- Optional function call logging and original-comparator fallback
-- Config presets (Vanilla, CoP-style, Custom) with runtime switching
-- Saving/loading of the Custom preset via `.ini` file
+Copy `winmm.dll` here:
+```
+S.T.A.L.K.E.R. 2 Heart of Chornobyl\Stalker2\Binaries\Win64
+```
+
+After first game shutdown or any change to the rules, ruck_master.ini will appear in the same folder. It will allow you to enable logs and modify sorting config without UI.
+
+## How to use?
+
+By default toggle key is hyphen or minus (`-`) button (the one to the right of 0).  
+You can change it in .ini file on any key you want.
+
+In overlay you can select sorting preset between Vanilla or Call of Pripyat. Or you could make your own configuration.  
+You can change sorting rules order in the rules list by drag-and-drop them. Enable and disable them by clicking. The higher the rule - the more priority it has.  
+You can change item type priorities in the same way (through drag-and-drop & clicking). Type priority list is enabled only if such rule is enabled in the rules list.
+
+Your settings will be preserved between game launches. If something goes wrong, you will error window upon entering the overlay. Screenshot it and post an issue. If error occurs every time, please enable logs and attach log to the issue. Log is called `ruck_master_log.txt` and is located near `Stalker2.exe` (only after you enabled logs in .ini file).
 
 ## Build Instructions
 
@@ -32,17 +42,6 @@ This project provides:
    cmake ..
    ```
 4. After that locate .sln or .slnx file in your build folder, open it via VS2022 and build in `Release`
-
-## Installation
-
-Copy `winmm.dll` here:
-
-```
-S.T.A.L.K.E.R. 2 Heart of Chornobyl\Stalker2\Binaries\Win64
-```
-
-After game shutdown, you will be able to modify ruck_master.ini located in the same folder. It will allow you to enable logs and modify sorting config without UI.
-
 
 ## Screenshots
 Vanilla does have gaps between items, because item size is ignored.
