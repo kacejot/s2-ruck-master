@@ -74,7 +74,7 @@ static void font_config_callback()
     
     ImFont* font = io.Fonts->AddFontFromFileTTF(
         "C:\\Windows\\Fonts\\consola.ttf",
-        20.0f,
+        22.0f,
         &font_cfg,
         io.Fonts->GetGlyphRangesCyrillic()
     );
